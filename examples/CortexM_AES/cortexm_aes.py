@@ -14,7 +14,6 @@ e = rainbow_arm(trace_config=TraceConfig(register=HammingWeight()))
 e.load("aes.bin", typ=".elf")
 e.setup()
 
-
 def aes_encrypt(key, plaintext):
     e.reset()
     key_addr = 0xDEAD0000
@@ -25,7 +24,7 @@ def aes_encrypt(key, plaintext):
     # AES_128_keyschedule(key, rk+16)
     e["r0"] = key_addr
     e["r1"] = rk_addr + 16
-    e.start(e.functions["AES_128_keyschedule"] | 1, 0)
+    e.start(e.functions["AES_128_keyschedule"][0] | 1, 0)
 
     buf_in = 0xDEAD2000
     buf_out = 0xDEAD3000
@@ -37,7 +36,7 @@ def aes_encrypt(key, plaintext):
     e["r1"] = buf_in
     e["r2"] = buf_out
     # e.trace_reset()
-    e.start(e.functions["AES_128_encrypt"] | 1, 0)
+    e.start(e.functions["AES_128_encrypt"][0] | 1, 0)
 
     # Hamming weight + noise to pretend we're on a real target
     trace = np.array([event["register"] for event in e.trace]) + np.random.normal(
@@ -60,7 +59,7 @@ KEY = bytes(range(16))
 container = CortexMAesContainer(N)
 
 cpa_engines = [
-    lascar.CpaEngine(lambda plaintext, key_byte, index=i: sbox[plaintext[index] ^ key_byte], range(256)) for
+    lascar.CpaEngine(f"cpa{i}", lambda plaintext, key_byte, index=i: sbox[plaintext[index] ^ key_byte], range(256)) for
     i in range(16)]
 s = lascar.Session(CortexMAesContainer(N), engines=cpa_engines, name="lascar CPA").run()
 
