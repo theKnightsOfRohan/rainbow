@@ -162,3 +162,4 @@ bin
 include/site/python3.13/uefi-firmware
 pyvenv.cfg
 share/man/man1
+lib64
